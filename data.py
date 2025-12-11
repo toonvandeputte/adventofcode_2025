@@ -1,6 +1,6 @@
 from pathlib import Path
 from termcolor import cprint
-
+import pandas as pd
 class Data:
 	def __init__(self):
 		self.raw = None
@@ -35,5 +35,30 @@ class Data:
 		self.raw = out
 		return self.raw
 
+	def load_math_problems(self,fp):
+		fp = f"{self.my_dir}/{fp}"
+		lines = []
+		with open(fp,'r') as file:
+			lines = file.readlines()
+		lines = [l.replace('\n','') for l in lines]
+		self.raw = lines
+		newlines = []
+		for l in lines:
+			while '  ' in l:
+				l = l.replace('  ',' ')
+			if l[0] == ' ':
+				l = l[1:]
+			if l[-1] == ' ':
+				l = l[:-1]
+			l = l.split(' ')
+			newlines.append(l)
+		lines = newlines
+		# print(lines)
+		self.df = pd.DataFrame(lines)
+		return self.df
+
 	def get_raw(self):
 		return self.raw
+	
+	def get_df(self):
+		return self.df
