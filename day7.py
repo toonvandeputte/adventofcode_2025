@@ -5,7 +5,7 @@ import pandas as pd
 
 class Day7:
 	def __init__(self):
-		self.input = 0
+		self.input = 1
 		self.inputs = ['day7/testinput','day7/input']
 		self.data = Data()
 		self.data.load_data(self.inputs[self.input])
@@ -25,25 +25,25 @@ class Day7:
 		print(screen)
 
 	def part1(self):
-		self.split_positions = []
+		expected_results = [21,1504]
+		# self.split_positions = []
 		start = self.find_startpos()
-		# tree = []
-		# next = self.expand_pos(start)
-		# tree = tree + next
-		# for n in next:
-		# 	print(n)
-		# 	tree = tree + self.expand_pos(n)
 		print(f"part1 starting from ({start[0]},{start[1]})")
-		# exit()
+
 		first = self.project_beam(start)
-		splits = self.expand_pos(first)
-		print(splits)
-		# print(splits)
-		# print(len(splits))
-		split_positions = [self.intify_pos(p) for p in self.split_positions]
-		treemap = self.update_grid(self.grid,split_positions)
-		print(len(self.split_positions))
+		positions = self.build_tree(first)
+
+		positions = [self.intify_pos(p) for p in positions]
+		treemap = self.update_grid(self.grid,positions)
+		# print(split_positions)
+		print(positions)
+		total = len(positions)
+		self.print_grid(self.grid)
 		self.print_grid(treemap)
+		if total == expected_results[self.input]:
+			cprint(total,'green')
+		else:
+			cprint(total,'red')
 
 	def find_startpos(self):
 		for i,r in enumerate(self.grid):
@@ -58,15 +58,9 @@ class Day7:
 		p = pos.split("-")
 		return [int(c) for c in p]
 
-	def is_visited(self,pos):
-		posstr = self.stringify_pos(pos)
-		if posstr in self.split_positions:
-			return True
-		return False
-
 	def project_beam(self,startpos):
+		# cprint(len(self.split_positions),'green')
 		startline = startpos[0] + 1
-		# print(f"startline from ({startpos[0]},{startpos[1]}): {startline}")
 		for i,r in enumerate(self.grid[startline:]):
 			# xpos = r.find('^')
 			if r[startpos[1]] == '^':
@@ -74,8 +68,8 @@ class Day7:
 			# if xpos >= 0:
 				out = [i+startline,startpos[1]]
 				outstr = self.stringify_pos(out)
-				if outstr not in self.split_positions:
-					self.split_positions.append(outstr)
+				# if outstr not in self.split_positions:
+				# self.split_positions.append(outstr)
 				return out
 
 	def make_unique(self,tree):
@@ -83,14 +77,32 @@ class Day7:
 		strtree = list(set(strtree))
 		strtree.sort()
 		out = []
-		# print(strtree)
 		for s in strtree:
 			pos = self.intify_pos(s)
 			out.append(pos)
 
 		return out
 
-	def build_tree(self,positions):
+	def build_tree(self,first):
+		# first = self.project_beam(startpos)
+		firststr = self.stringify_pos(first)
+		to_expand = [firststr]
+		found = [firststr]
+		while to_expand:
+			cprint(f"{len(to_expand)} / {len(found)}", 'green')
+			pos = to_expand.pop()
+			pos = self.intify_pos(pos)
+			next = self.expand_pos(pos)
+			for n in next:
+				strn = self.stringify_pos(n)
+				if strn not in to_expand and strn not in found:
+					to_expand.append(strn)
+				if strn not in found:
+					found.append(strn)
+		return found
+			
+
+	def build_tree_old(self,positions):
 		# tree = positions
 		# tree = self.expand_pos(pos)
 		tree = positions
@@ -98,48 +110,21 @@ class Day7:
 			next = self.expand_pos(p)
 			if next:
 				tree = tree + next + self.build_tree(next)
+		# cprint(len(tree),'green')
 		return self.make_unique(tree)
-		
-		# print(newpos)
-		# exit()
-		# if newpos:
-		# 	for n in newpos:
-		# 		self.expand_pos(n)
-				# print(f"add ({n[0]},{n[1]}) to tree")
-				# tree.append(n)
-				# # print(tree)
-				# # exit()
-				# tree = self.make_unique(tree)
-				# tree = tree + self.build_tree(n)
-
-		# tree = [pos] + self.expand_pos(pos)
-		# return tree
-		# return self.make_unique(tree)
-		# newpos = self.expand_pos(pos)
-		# print(newpos)
-		# while newpos:
-		# 	for p in newpos:
-		# 		tree = tree + self.build_tree(p)
-		# return tree
 
 	def expand_pos(self,pos):
 		startpositions = self.nextbeams(pos)
-		print(startpositions)
 		out = []
 		for p in startpositions:
-			split = self.project_beam(pos)
-			print(split)
+			split = self.project_beam(p)
 			if split:
 				out.append(split)
-		out = self.make_unique(out)
-		cprint(f"{pos[0]},{pos[1]} ->",'green')
-		for o in out:
-			cprint(f"   {o[0]},{o[1]}",'green')
+		# out = self.make_unique(out)
 		return out
 		
 
 	def nextbeams(self,pos):
-		# print(pos)
 		leftx = pos[1] - 1
 		rightx = pos[1] + 1
 		out = []
@@ -147,6 +132,4 @@ class Day7:
 			out.append([pos[0],leftx])
 		if rightx < len(self.grid[0]):
 			out.append([pos[0],rightx])
-		# print(out)
-		# exit()
 		return out
